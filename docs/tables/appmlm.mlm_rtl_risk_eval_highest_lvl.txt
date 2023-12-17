@@ -1,0 +1,3 @@
+cust_id       string  客户编号
+risk_lvl_high int     风险等级
+dt            string  dt

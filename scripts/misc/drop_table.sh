@@ -1,0 +1,34 @@
+#!/bin/bash
+
+drop table alembic_version;
+drop table celery_taskmeta;
+drop table celery_tasksetmeta;
+drop table chart;
+drop table connection;
+drop table dag;
+drop table dag_pickle;
+drop table dag_run;
+drop table dag_tag;
+drop table import_error;
+drop table job;
+drop table known_event;
+drop table known_event_type;
+drop table kube_resource_version;
+drop table kube_worker_uuid;
+drop table log;
+drop table migrations;
+drop table offline_reco_activity;
+drop table offline_reco_channel;
+drop table offline_reco_dag;
+drop table offline_reco_dag_config;
+drop table offline_reco_scene;
+drop table offline_reco_scene_config;
+drop table serialized_dag;
+drop table sla_miss;
+drop table slot_pool;
+drop table task_fail;
+drop table task_instance;
+drop table task_reschedule;
+drop table users;
+drop table variable;
+drop table xcom;

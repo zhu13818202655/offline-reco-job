@@ -1,0 +1,73 @@
+files: >
+  (?x)^(
+      .*\.py
+  )$
+default_language_version:
+  python: python3.7
+repos:
+  - repo: local
+    hooks:
+      - id: autoflake
+        name: autoflake
+        entry: autoflake
+        language: python
+        files: \.py$
+        args:
+          - --in-place
+          - --remove-all-unused-imports
+  - repo: https://git.tianrang-inc.com/mirrors/black
+    rev: 19.10b0
+    hooks:
+      - id: black
+        additional_dependencies: ['click==8.0.4']
+  - repo: https://git.tianrang-inc.com/mirrors/isort
+    rev: 5.9.2
+    hooks:
+      - id: isort
+        language_version: python3
+  # - repo: https://github.com/humitos/mirrors-autoflake
+  #   rev: v1.1
+  #   hooks:
+  #     - id: autoflake
+  #       args: ['--in-place', '--remove-all-unused-imports', '--remove-unused-variable']
+  - repo: https://git.tianrang-inc.com/mirrors/pre-commit-hooks
+    rev: v2.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: debug-statements
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: check-builtin-literals
+      - id: check-byte-order-marker
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: double-quote-string-fixer
+  # - repo: local
+  #   hooks:
+  #   - id: pylint
+  #     name: pylint - Source - Errors
+  #     entry: pylint -E -j 2 -f colorized --persistent=no --reports=no --score=no
+  #     types: [python]
+  #     language: python
+  #   - id: pylint
+  #     name: pylint - Source - Reports
+  #     entry: pylint --exit-zero -j 2 -f colorized --persistent=no --reports=no --score=no
+  #     types: [python]
+  #     language: python
+  #     verbose: true
+  #     files: >
+  #       (?x)^(
+  #           .*\.py
+  #       )$
+  #   - id: pylint
+  #     name: pylint - Tests - Reports
+  #     entry: pylint --exit-zero -j 2 -f colorized --persistent=no --reports=no --score=no --disable=protected-access
+  #     types: [python]
+  #     language: python
+  #     verbose: true
+  #     files: >
+  #       (?x)^(
+  #           .*\.py
+  #       )$

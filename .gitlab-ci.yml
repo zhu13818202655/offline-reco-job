@@ -1,0 +1,99 @@
+variables:
+  PYPI_INDEX: https://nexus-h.tianrang-inc.com/repository/pypi/simple
+  PYSPARK_PYTHON: /usr/bin/python3
+  HTTP_PROXY: http://172.18.178.13:3129
+  HTTPS_PROXY: http://172.18.178.13:3129
+  NO_PROXY: .tianrang-inc.com
+
+# codestyle:
+#   stage: test
+#   image: hub-docker-h.tianrang-inc.com/rec-system/bdasire/job-scheduler:v1.0.4
+#   only:
+#     - merge_requests
+#   except:
+#     variables:
+#       - $CI_MERGE_REQUEST_TITLE =~ /^WIP:.*/
+#   variables:
+#     PYTHONPATH: src:$PYTHONPATH
+#   script:
+#     - python3 -m pip install --index-url ${PYPI_INDEX} -U pip
+#     - python3 -m pip install --index-url ${PYPI_INDEX} -U pre-commit==2.15.0 pylint==2.11.1 autoflake==1.4 pytest
+#     - conda install -y git
+#     - pre-commit run --all-files --show-diff-on-failure
+#     - pylint -E -j 16 -f colorized --rcfile .pylintrc $(git ls-files 'src/*.py')
+
+mock:
+  stage: build
+  # image: hub-mirror.c.163.com/library/node:16
+  image: hub-docker-h.tianrang-inc.com/rec-system/bdasire/mocker:v0.0.1
+  only:
+    - merge_requests
+  script:
+    # - cd mocker && npm install && cd ../
+    - cp -r /mocker/node_modules ./mocker/
+    - ./mocker/gen_data.sh
+    - cp -r mocker/.runtime data
+  artifacts:
+    paths:
+      - data
+    expire_in: 1 hour
+
+unittest:
+  stage: test
+  image: hub-docker-h.tianrang-inc.com/rec-system/bdasire/job-scheduler:v1.0.4
+  dependencies:
+    - mock
+  only:
+    - merge_requests
+  except:
+    variables:
+      - $CI_MERGE_REQUEST_TITLE =~ /^WIP:.*/
+  variables:
+    PYTHONPATH: src:$PYTHONPATH
+    PYSPARK_PYTHON: /tianrang/miniconda/bin/python3
+    PYSPARK_DRIVER_PYTHON: /tianrang/miniconda/bin/python3
+    SPARK_CONF_DIR: conf
+  script:
+    - cp -r data mocker/.runtime
+    - python3 -m pip install --index-url ${PYPI_INDEX} -U pip
+    - pip3 install pytest==6.2.5 pytest-cov==3.0.0 coverage -i ${PYPI_INDEX}
+    - mkdir -p "$SPARK_CONF_DIR" && echo "spark.driver.memory 12g" >> "$SPARK_CONF_DIR/spark-defaults.conf"
+    - echo "spark.executor.memory 12g" >> "$SPARK_CONF_DIR/spark-defaults.conf"
+    - pytest -v -s --durations=0 --cov=src --cov-report=term-missing src/tests/unit_test.py
+    - coverage xml
+    - pytest -v --noconftest src/tests/prod_test.py # 测试生产配置对齐
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+
+functest:
+  stage: test
+  image: hub-docker-h.tianrang-inc.com/rec-system/bdasire/job-scheduler:v1.0.4
+  dependencies:
+    - mock
+  only:
+    - merge_requests
+  except:
+    variables:
+      - $CI_MERGE_REQUEST_TITLE =~ /^WIP:.*/
+  variables:
+    PYTHONPATH: src:$PYTHONPATH
+    PYSPARK_PYTHON: /tianrang/miniconda/bin/python3
+    PYSPARK_DRIVER_PYTHON: /tianrang/miniconda/bin/python3
+    SPARK_CONF_DIR: conf
+  script:
+    - cp -r data mocker/.runtime
+    - python3 -m pip install --index-url ${PYPI_INDEX} -U pip
+    - pip3 install pytest==6.2.5 pytest-cov==3.0.0 coverage -i ${PYPI_INDEX}
+    - mkdir -p "$SPARK_CONF_DIR" && echo "spark.driver.memory 12g" >> "$SPARK_CONF_DIR/spark-defaults.conf"
+    - echo "spark.executor.memory 12g" >> "$SPARK_CONF_DIR/spark-defaults.conf"
+    - pytest -v -s --durations=0 --cov=src --cov-report=term-missing src/tests/job_test.py
+    - coverage xml
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
